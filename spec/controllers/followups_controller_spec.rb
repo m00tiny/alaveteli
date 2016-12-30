@@ -10,10 +10,33 @@ describe FollowupsController do
 
   describe "GET #new" do
 
-    it 'raises an ActiveRecord::RecordNotFound error for an embargoed request' do
-      embargoed_request = FactoryGirl.create(:embargoed_request)
-      expect{ get :new, :request_id => embargoed_request.id }
-        .to raise_error(ActiveRecord::RecordNotFound)
+    context "when not logged in" do
+      it 'raises an ActiveRecord::RecordNotFound error for an embargoed request' do
+        embargoed_request = FactoryGirl.create(:embargoed_request)
+        expect{ get :new, :request_id => embargoed_request.id }
+          .to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    context "when a pro user is logged in" do
+      let(:pro_user) { FactoryGirl.create(:pro_user) }
+
+      before do
+        session[:user_id] = pro_user.id
+      end
+
+      it 'finds their own embargoed requests' do
+        embargoed_request = FactoryGirl.create(:embargoed_request,
+                                               user: pro_user)
+        get :new, :request_id => embargoed_request.id
+        expect(response).to be_success
+      end
+
+      it 'raises an ActiveRecord::RecordNotFound error for other embargoed requests' do
+        embargoed_request = FactoryGirl.create(:embargoed_request)
+        expect{ get :new, :request_id => embargoed_request.id }
+          .to raise_error(ActiveRecord::RecordNotFound)
+      end
     end
 
     it "displays 'wrong user' message when not logged in as the request owner" do
