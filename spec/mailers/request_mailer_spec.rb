@@ -447,6 +447,20 @@ describe RequestMailer do
         to eq("describe_state_form_1")
     end
 
+    context "when a request is embargoed" do
+      let(:info_request) { FactoryGirl.create(:info_request_with_plain_incoming) }
+      let(:embargo) { FactoryGirl.create(:embargo, :info_request) }
+
+      it "sends an alert" do
+        RequestMailer.alert_new_response_reminders
+        deliveries = ActionMailer::Base.deliveries
+        mails = ActionMailer::Base.deliveries.select{|x| x.body =~ /#{info_request.title}/}
+        mail = mails[0]
+
+        expect(mail.to_addrs.first.to_s).to eq(info_request.user.email)
+      end
+    end
+
   end
 
   describe "requires_admin" do
