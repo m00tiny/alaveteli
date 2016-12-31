@@ -600,6 +600,23 @@ describe RequestMailer do
       expect(kitten_mails.size).to eq(2)
     end
 
+    it "sends alerts for embargoed requests" do
+      info_request = FactoryGirl.create(:embargoed_request)
+      info_request.outgoing_messages[0].last_sent_at = overdue_date
+      info_request.outgoing_messages[0].save!
+
+      time_travel_to request_date
+
+      RequestMailer.alert_overdue_requests
+
+      mails = ActionMailer::Base.deliveries.select{|x| x.body =~ /#{info_request.title}/}
+      mail = mails[0]
+
+      expect(mail.to_addrs.first.to_s).to eq(info_request.user.email)
+
+      back_to_the_present
+    end
+
     context "very overdue alerts" do
 
       it 'should not create HTML entities in the subject line' do
@@ -627,6 +644,23 @@ describe RequestMailer do
         post_redirect = PostRedirect.find_by_email_token(mail_token)
         expect(post_redirect.uri).
           to match(new_request_followup_path(@kitten_request.id))
+      end
+
+      it "sends very overdue alerts for embargoed requests" do
+        info_request = FactoryGirl.create(:embargoed_request)
+        info_request.outgoing_messages[0].last_sent_at = very_overdue_date
+        info_request.outgoing_messages[0].save!
+
+        time_travel_to request_date
+
+        RequestMailer.alert_overdue_requests
+
+        mails = ActionMailer::Base.deliveries.select{|x| x.body =~ /#{info_request.title}/}
+        mail = mails[0]
+
+        expect(mail.to_addrs.first.to_s).to eq(info_request.user.email)
+
+        back_to_the_present
       end
 
     end
