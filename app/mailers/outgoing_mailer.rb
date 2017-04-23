@@ -15,11 +15,18 @@
 
 class OutgoingMailer < ApplicationMailer
   # Email to public body requesting info
-  def initial_request(info_request, outgoing_message)
+  def initial_request(info_request, outgoing_message, attach = [])
     @info_request = info_request
     @outgoing_message = outgoing_message
     @contact_email = AlaveteliConfiguration.contact_email
     headers["message-id"] = OutgoingMailer.id_for_message(@outgoing_message)
+
+    attach.each { |attachment|
+      attachments[attachment.original_filename] = {
+        mime_type: attachment.content_type,
+        content: attachment.tempfile.read
+      }
+    }
 
     mail(:from => @outgoing_message.from,
          :to => @outgoing_message.to,

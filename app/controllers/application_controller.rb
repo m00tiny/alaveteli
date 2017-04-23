@@ -245,8 +245,11 @@ class ApplicationController < ActionController::Base
   # Check the user is logged in
   def authenticated?(reason_params)
     unless session[:user_id]
-      post_redirect = PostRedirect.new(:uri => request.fullpath, :post_params => params,
-                                       :reason_params => reason_params)
+      post_redirect = PostRedirect.new(
+        :uri => request.fullpath,
+        :post_params => params.reject { |(key, _)| key.to_s == "attachments" },
+        :reason_params => reason_params)
+
       post_redirect.save!
       # Make sure this redirect does not get cached - it only applies to this user.
       # HTTP 1.1

@@ -413,6 +413,18 @@ class RequestController < ApplicationController
       end
     end
 
+    # Check all the attachments were sent.
+    #
+    # TODO: make this dependent on the authority settings.
+    if params[:attachments].nil? ||
+       params[:attachments][:front].nil? ||
+       params[:attachments][:back].nil?
+    then
+      flash.now[:error] = "Assicurati di aver aggiunto gli allegati richiesti."
+      render :action => 'new'
+      return
+    end
+
     # This automatically saves dependent objects, such as @outgoing_message, in the same transaction
     @info_request.save!
 
@@ -421,7 +433,10 @@ class RequestController < ApplicationController
     if @outgoing_message.sendable?
       mail_message = OutgoingMailer.initial_request(
         @outgoing_message.info_request,
-        @outgoing_message
+        @outgoing_message,
+        params[:attachments].select { |name, _|
+          ['front', 'back'].include?(name)
+        }.values
       ).deliver
 
       @outgoing_message.record_email_delivery(
