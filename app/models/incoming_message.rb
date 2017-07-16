@@ -639,10 +639,11 @@ class IncomingMessage < ActiveRecord::Base
     end
     text.strip!
 
+    text.gsub!(/io sottoscritt.*\nnat[oa].*CHIEDO\s*$/im, "[DATI PERSONALI RIMOSSI]\n\nCHIEDO\n")
+
     text = ActionController::Base.helpers.simple_format(text)
     text.html_safe
   end
-
 
   # Returns text of email for using in quoted section when replying
   def get_body_for_quoting

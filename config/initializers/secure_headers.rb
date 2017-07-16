@@ -22,6 +22,9 @@
 
   # https://www.nwebsec.com/HttpHeaders/SecurityHeaders/XDownloadOptions
   config.x_download_options = SecureHeaders::OPT_OUT
+
+  # Disable frame security.
+  config.x_frame_options = SecureHeaders::OPT_OUT
 end
 
  # Allow individual actions to allow frames

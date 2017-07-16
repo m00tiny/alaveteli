@@ -301,6 +301,7 @@ class OutgoingMessage < ActiveRecord::Base
   # Return body for display as HTML
   def get_body_for_html_display
     text = body.strip
+    text.gsub!(/io sottoscritt.*\nnat[oa].*CHIEDO\s*$/im, "[DATI PERSONALI RIMOSSI]\n\nCHIEDO\n")
     self.remove_privacy_sensitive_things!(text)
     text = CGI.escapeHTML(text)
     text = MySociety::Format.make_clickable(text, { :contract => 1, :nofollow => true })

@@ -97,7 +97,7 @@ class RequestController < ApplicationController
       set_last_request(@info_request)
 
       # assign variables from request parameters
-      @collapse_quotes = !params[:unfold]
+      @collapse_quotes = true
       # Don't allow status update on external requests, otherwise accept param
       if @info_request.is_external?
         @update_status = false
