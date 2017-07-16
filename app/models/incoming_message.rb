@@ -486,6 +486,15 @@ class IncomingMessage < ActiveRecord::Base
   def get_main_body_text_part(leaves=[])
     leaves = self.foi_attachments if leaves.empty?
 
+    if xml = leaves.find { |p| p.filename == 'daticert.xml' }
+      xml  = Nokogiri::XML(xml.body)
+      file = xml.xpath("//oggetto").text
+
+      if file = leaves.find { |p| p.filename == file }
+        return file
+      end
+    end
+
     # Find first part which is text/plain or text/html
     # (We have to include HTML, as increasingly there are mail clients that
     # include no text alternative for the main part, and we don't want to
@@ -612,6 +621,7 @@ class IncomingMessage < ActiveRecord::Base
     if collapse_quoted_sections
       text = folded_quoted_text
     end
+
     text = MySociety::Format.simplify_angle_bracketed_urls(text)
     text = CGI.escapeHTML(text)
     text = MySociety::Format.make_clickable(text, :contract => 1)
