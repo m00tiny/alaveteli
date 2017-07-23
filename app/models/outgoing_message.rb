@@ -30,6 +30,7 @@ class OutgoingMessage < ActiveRecord::Base
   extend MessageProminence
   include Rails.application.routes.url_helpers
   include LinkToHelper
+	include CensorHelper
 
   STATUS_TYPES = %w(ready sent failed).freeze
   MESSAGE_TYPES = %w(initial_request followup).freeze
@@ -279,6 +280,7 @@ class OutgoingMessage < ActiveRecord::Base
   # We hide emails from display in outgoing messages.
   def remove_privacy_sensitive_things!(text)
     text.gsub!(MySociety::Validate.email_find_regexp, "[email address]")
+		censor!(text)
   end
 
   # Returns text for indexing / text display
@@ -301,7 +303,6 @@ class OutgoingMessage < ActiveRecord::Base
   # Return body for display as HTML
   def get_body_for_html_display
     text = body.strip
-    text.gsub!(/io sottoscritt.*\nnat[oa].*CHIEDO\s*$/im, "[DATI PERSONALI RIMOSSI]\n\nCHIEDO\n")
     self.remove_privacy_sensitive_things!(text)
     text = CGI.escapeHTML(text)
     text = MySociety::Format.make_clickable(text, { :contract => 1, :nofollow => true })

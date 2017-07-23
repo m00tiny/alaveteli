@@ -182,7 +182,7 @@ class FollowupsController < ApplicationController
     @gone_postal = params[:gone_postal]
     @gone_postal = false if !@is_owning_user
     set_postal_addresses if @gone_postal
-    @collapse_quotes = !params[:unfold]
+    @collapse_quotes = true
   end
 
   def set_postal_addresses

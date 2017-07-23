@@ -38,6 +38,7 @@ require 'iconv' unless String.method_defined?(:encode)
 
 class IncomingMessage < ActiveRecord::Base
   include AdminColumn
+	include CensorHelper
   extend MessageProminence
 
   MAX_ATTACHMENT_TEXT_CLIPPED = 1000000 # 1Mb ish
@@ -455,6 +456,7 @@ class IncomingMessage < ActiveRecord::Base
     else
       # whatever kind of attachment it is, get the UTF-8 encoded text
       text = part.body_as_text.string
+
       if part.content_type == 'text/html'
         # e.g. http://www.whatdotheyknow.com/request/35/response/177
         # TODO: This is a bit of a hack as it is calling a
@@ -487,11 +489,11 @@ class IncomingMessage < ActiveRecord::Base
     leaves = self.foi_attachments if leaves.empty?
 
     if xml = leaves.find { |p| p.filename == 'daticert.xml' }
-      xml  = Nokogiri::XML(xml.body)
-      file = xml.xpath("//oggetto").text
+      xml     = Nokogiri::XML(xml.body)
+      subject = xml.xpath("//oggetto").text.gsub(/\s+/, ' ')
 
-      if file = leaves.find { |p| p.filename == file }
-        return file
+      if p = leaves.find { |p| p.within_rfc822_subject == subject }
+        return p
       end
     end
 
@@ -648,8 +650,7 @@ class IncomingMessage < ActiveRecord::Base
       end
     end
     text.strip!
-
-    text.gsub!(/io sottoscritt.*\nnat[oa].*CHIEDO\s*$/im, "[DATI PERSONALI RIMOSSI]\n\nCHIEDO\n")
+		censor!(text)
 
     text = ActionController::Base.helpers.simple_format(text)
     text.html_safe
